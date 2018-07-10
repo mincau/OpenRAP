@@ -497,6 +497,7 @@ let getEcarById = (req, res) => {
 let telemetryData = (req, res) => {
     //console.log(req.files);
     let body = JSON.stringify(req.body);
+    console.log("Telemetry endpoint called");
     //return res.status(200).json({success: true});
     //let fileData = req.files;
     //let oldPath = fileData.file.path;
@@ -516,10 +517,12 @@ let telemetryData = (req, res) => {
         fs.writeFile(telemetryDir + newFileName, body, (err) => {
             responseStructure.ts = new Date();
             if (err) {
+                console.log("error thrown");
                 responseStructure.status = "error";
                 responseStructure.errmsg = err;
                 return res.status(500).json(responseStructure);
             } else {
+                console.log("EkStep Telemetry Written");
                 return res.status(200).json(responseStructure);
             }
         });

@@ -85,7 +85,7 @@ let generateJwt = (key, secret) => {
     let options = {
         algorithm : 'RS256'
     }
-    jwt.sign(payload, secret, options, (err, token) => {
+    jwt.sign(payload, secret, (err, token) => {
         if (err) {
             return defer.reject({err});
         } else {
@@ -103,11 +103,13 @@ let checkConnectivity = () => {
 	    dns.resolve('aws.amazon.com', (err) => {
 	        if (err) {
 		    defer.reject({err});
-		} else {
-		    defer.resolve();
+		    } else {
+                console.log("Amazon Resolved!");
+		        defer.resolve();
 	        }
 	    });
 	} else {
+        console.log("Google Resolved!");
 	    defer.resolve();
 	}
     });
@@ -120,13 +122,13 @@ let requestTokenGeneration = (options) => {
         if(err) {
             logger.log("error", "Error : " + err/* + " \nStatus Code: " + resp.statusCode*/);
             //TODO: Add code to try again [DONE]
-            setTimeout(() => requestTokenGeneration(options), 10000);
+            // setTimeout(() => requestTokenGeneration(options), 10000);
             return defer.reject(err);
         } else {
             let statusCode = resp.statusCode;
             if (parseInt(statusCode / 100) != 2) {
                 //TODO: Add code to try again [DONE]
-                setTimeout(() => {requestTokenGeneration(options)}, 10000);
+                // setTimeout(() => {requestTokenGeneration(options)}, 10000);
                 return defer.reject(statusCode);
             }
             parsedBody = JSON.parse(body);
@@ -138,7 +140,8 @@ let requestTokenGeneration = (options) => {
                 tmJwt = value.token;
                 logger.log("info", "Device key: " + deviceKey + " Device Secret: " + deviceSecret + " JWT Token: " + tmJwt);
                 currentTokenStatus = 1;
-                uploadTelemetryDirectory();
+                return uploadTelemetryDirectory();
+            }).then(value => {
                 return defer.resolve();
             }).catch(e => {
                 console.log("Error: " + e.err);
@@ -180,7 +183,7 @@ let generateToken = () => {
     }
     let statusCode = 0;
     requestTokenGeneration(options).then(value => {
-        return defer.reslove();
+        return defer.resolve();
     }).catch(e => {
         return defer.reject(e);
     });
@@ -361,12 +364,19 @@ let uploadTelemetryDirectory = () => {
     return defer.promise;
 }
 
-loggingInit().then(value => {
-    return generateToken();
-}).then(value => {
-    console.log("Success");
-}).catch(e => {
-    console.log("Error");
-    console.log(e);
-    console.log("Finished with errors");
-});
+let uploadTelemetryToCloud = () => {
+    console.log("EkStep upload Handler Called!");
+    loggingInit().then(value => {
+        return generateToken();
+    }).then(value => {
+        console.log("Uploaded Telemetry to EkStep Servers");
+    }).catch(e => {
+        console.log("Error");
+        console.log(e);
+        console.log("Finished with errors");
+    });
+}
+
+module.exports = {
+    uploadTelemetryToCloud
+}

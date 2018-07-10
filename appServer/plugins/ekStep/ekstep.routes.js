@@ -6,8 +6,9 @@ let { init, createIndex, addDocument, deleteIndex, deleteDocument, getDocument, 
 let { deleteDir } = require('../../../filesdk');
 let { getHomePage, getEcarById,  performSearch, telemetryData, extractFile, performRecommendation, createFolderIfNotExists } = require('./ekstep.controller.js');
 let { exec } = require('child_process');
+let cron = require('node-cron');
 
-// let { uploadTelemetryToCloud } = require('./ekstep.telemetry_upload.js');
+ let { uploadTelemetryToCloud } = require('./ekstep.telemetry_upload.js');
 
 module.exports = app => {
 
@@ -37,8 +38,9 @@ module.exports = app => {
     app.post('/api/search/v2/search', performSearch);
     app.post('/composite/v3/search', performSearch);
     app.post('/api/composite/v3/search', performSearch);
-
-    app.post('/api/content/v3/recommend', performRecommendation);
+    
+    // Disabled until further directive
+    // app.post('/api/content/v3/recommend', performRecommendation);
 
     /*
         Init functions for ekStep plugin that are called explicitly by routes
@@ -214,6 +216,10 @@ module.exports = app => {
         /*
             read all ecars and add to search index
         */
+        cron.schedule("*/10 * * * * *", () => {
+            console.log("Uploading EkStep telemetry to cloud...");
+            uploadTelemetryToCloud();
+        });
         initializeEkstepData('/opt/opencdn/appServer/plugins/ekStep/profile.json').then(value => {
             let dir = value.jsonDir;
             return createFolderIfNotExists(ekStepData.media_root);
